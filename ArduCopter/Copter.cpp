@@ -1,4 +1,4 @@
-/*
+/* 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation, either version 3 of the License, or
@@ -75,6 +75,7 @@
  */
 
 #include "Copter.h"
+#include "AP_Notify/ToneAlarm.h"
 
 #define FORCE_VERSION_H_INCLUDE
 #include "version.h"
@@ -84,6 +85,17 @@ const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 
 #define SCHED_TASK(func, rate_hz, max_time_micros) SCHED_TASK_CLASS(Copter, &copter, func, rate_hz, max_time_micros)
 
+// Distance maximale de la cible permise. Au-delà de cette limite, le mode land est activé.
+#define MAX_DISTANCE_UWB 2 // en metres
+#define FREQUENCE_UWB 10 // en Hz
+#define NBR_ITERATIONS_ENCLENCHER_MODE_LAND 3
+
+// int global_compteur = 0;
+
+// Variable globale, permet de compter le nombre d'itération ayant atteint la limite
+int g_compteur_atteinte_limite = 0;
+
+
 /*
   scheduler table for fast CPUs - all regular tasks apart from the fast_loop()
   should be listed here, along with how often they should be called (in hz)
@@ -92,6 +104,9 @@ const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 const AP_Scheduler::Task Copter::scheduler_tasks[] = {
     SCHED_TASK(rc_loop,              100,    130),
     SCHED_TASK(throttle_loop,         50,     75),
+    SCHED_TASK(read_uwb,    FREQUENCE_UWB,    100),
+
+
     SCHED_TASK_CLASS(AP_GPS, &copter.gps, update, 50, 200),
 #if OPTFLOW == ENABLED
     SCHED_TASK_CLASS(OpticalFlow,          &copter.optflow,             update,         200, 160),
@@ -216,6 +231,7 @@ void Copter::get_scheduler_tasks(const AP_Scheduler::Task *&tasks,
 
 constexpr int8_t Copter::_failsafe_priorities[7];
 
+
 // Main loop - 400hz
 void Copter::fast_loop()
 {
@@ -264,6 +280,32 @@ void Copter::fast_loop()
     if (should_log(MASK_LOG_ANY)) {
         Log_Sensor_Health();
     }
+
+
+
+
+
+///////////////////////////////////
+/*
+if(global_compteur % 2000 == 0)
+{
+
+AP_ToneAlarm son_a_jouer;
+
+son_a_jouer.play_tone(8);
+
+global_compteur = 0;
+
+}
+
+global_compteur++;
+
+*/
+///////////////////////////////////
+
+
+
+
 
     AP_Vehicle::fast_loop();
 }
@@ -640,6 +682,63 @@ bool Copter::get_wp_crosstrack_error_m(float &xtrack_error) const
     // see GCS_MAVLINK_Copter::send_nav_controller_output()
     xtrack_error = flightmode->crosstrack_error() * 0.01;
     return true;
+}
+
+
+
+void Copter::read_uwb(void)
+{
+
+AP_HAL::UARTDriver *uart = nullptr;
+uart = hal.serial(2);
+uart->begin(115200,32, 512);
+
+float distance = 0;
+char buffer[20];
+int counter = 0;
+
+int16_t nbytes= uart->available();
+
+    while(nbytes-- > 0)
+    {
+    char c = uart->read();
+
+        if(c== '\r')
+        {
+        distance = (float)atof(buffer);
+        }
+
+        else
+        {
+            buffer[counter] = c;
+        }
+
+    counter++;
+
+    }
+
+    if(distance > MAX_DISTANCE_UWB)
+    {
+
+    // Test de son pour savoir si la condition est atteinte :
+    // AP_ToneAlarm son_a_jouer2;
+    // son_a_jouer2.play_tone(8);
+
+    g_compteur_atteinte_limite++;
+
+
+        // on fixe un minimum d'itérations nécessaires, sinon
+        if(g_compteur_atteinte_limite >= NBR_ITERATIONS_ENCLENCHER_MODE_LAND)
+        {
+        set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
+        update_flight_mode();
+        g_compteur_atteinte_limite = 0;
+        }
+
+    }
+
+uart->end();
+
 }
 
 /*
