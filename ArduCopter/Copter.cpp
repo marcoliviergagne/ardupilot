@@ -717,6 +717,14 @@ int16_t nbytes= uart->available();
 
     }
 
+// -1000 signifie une mauvaise communication entre les cartes, peut survenir de temps en temps
+
+if((int)distance != -1000)
+{
+// Si la distance est plus grande que la limite
+
+
+    // ZONE DE VOL INTERDITE
     if(distance > MAX_DISTANCE_UWB)
     {
 
@@ -724,10 +732,13 @@ int16_t nbytes= uart->available();
     // AP_ToneAlarm son_a_jouer2;
     // son_a_jouer2.play_tone(8);
 
+    // On compte le nombre de fois que le capteur a mesuré un dépassement
     g_compteur_atteinte_limite++;
 
 
-        // on fixe un minimum d'itérations nécessaires, sinon
+        // Si les capteurs mesure NBR_ITERATIONS_ENCLENCHER_MODE_LAND fois un dépassement,
+        // on enclenche le mode LAND
+
         if(g_compteur_atteinte_limite >= NBR_ITERATIONS_ENCLENCHER_MODE_LAND)
         {
         set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
@@ -736,6 +747,15 @@ int16_t nbytes= uart->available();
         }
 
     }
+
+    // ZONE DE VOL PERMISE
+    // Si on mesure une distance qui n'égale pas -1000, mais qui est plus petite que la limite, alors one ne fait rien
+    else
+    {
+        g_compteur_atteinte_limite = 0;
+    }
+
+}
 
 uart->end();
 
