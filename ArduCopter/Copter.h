@@ -650,7 +650,6 @@ private:
     bool set_target_angle_and_climbrate(float roll_deg, float pitch_deg, float yaw_deg, float climb_rate_ms, bool use_yaw_rate, float yaw_rate_degs) override;
     void rc_loop();
     void read_uwb(void);
-
     void throttle_loop();
     void update_batt_compass(void);
     void fourhundred_hz_logging();

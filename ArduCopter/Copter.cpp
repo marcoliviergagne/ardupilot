@@ -741,6 +741,10 @@ if((int)distance != -1000)
 
         if(g_compteur_atteinte_limite >= NBR_ITERATIONS_ENCLENCHER_MODE_LAND)
         {
+
+    AP_ToneAlarm son_a_jouer2;
+    son_a_jouer2.play_tone(8);
+
         set_mode(Mode::Number::LAND, ModeReason::FAILSAFE);
         update_flight_mode();
         g_compteur_atteinte_limite = 0;
@@ -760,6 +764,7 @@ if((int)distance != -1000)
 uart->end();
 
 }
+
 
 /*
   constructor for main Copter class
