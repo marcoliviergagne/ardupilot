@@ -86,14 +86,14 @@ const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 #define SCHED_TASK(func, rate_hz, max_time_micros) SCHED_TASK_CLASS(Copter, &copter, func, rate_hz, max_time_micros)
 
 // Distance maximale de la cible permise. Au-delà de cette limite, le mode land est activé.
-#define MAX_DISTANCE_UWB 2 // en metres
-#define FREQUENCE_UWB 10 // en Hz
-#define NBR_ITERATIONS_ENCLENCHER_MODE_LAND 3
+//#define MAX_DISTANCE_UWB 2 // en metres
+//#define FREQUENCE_UWB 10 // en Hz
+//#define NBR_ITERATIONS_ENCLENCHER_MODE_LAND 3
 
 // int global_compteur = 0;
 
 // Variable globale, permet de compter le nombre d'itération ayant atteint la limite
-int g_compteur_atteinte_limite = 0;
+//static int g_compteur_atteinte_limite = 0;
 
 
 /*
@@ -104,7 +104,7 @@ int g_compteur_atteinte_limite = 0;
 const AP_Scheduler::Task Copter::scheduler_tasks[] = {
     SCHED_TASK(rc_loop,              100,    130),
     SCHED_TASK(throttle_loop,         50,     75),
-    SCHED_TASK(read_uwb,    FREQUENCE_UWB,    100),
+   // SCHED_TASK(read_uwb,    FREQUENCE_UWB,    100),
 
 
     SCHED_TASK_CLASS(AP_GPS, &copter.gps, update, 50, 200),
@@ -280,31 +280,6 @@ void Copter::fast_loop()
     if (should_log(MASK_LOG_ANY)) {
         Log_Sensor_Health();
     }
-
-
-
-
-
-///////////////////////////////////
-/*
-if(global_compteur % 2000 == 0)
-{
-
-AP_ToneAlarm son_a_jouer;
-
-son_a_jouer.play_tone(8);
-
-global_compteur = 0;
-
-}
-
-global_compteur++;
-
-*/
-///////////////////////////////////
-
-
-
 
 
     AP_Vehicle::fast_loop();
@@ -685,12 +660,12 @@ bool Copter::get_wp_crosstrack_error_m(float &xtrack_error) const
 }
 
 
-
+/*
 void Copter::read_uwb(void)
 {
 
 AP_HAL::UARTDriver *uart = nullptr;
-uart = hal.serial(2);
+uart = hal.uartD;
 uart->begin(115200,32, 512);
 
 float distance = 0;
@@ -699,8 +674,11 @@ int counter = 0;
 
 int16_t nbytes= uart->available();
 
-    while(nbytes-- > 0)
+    while(nbytes > 0)
     {
+	if(counter>0)
+	{AP_ToneAlarm son_a_jouer3;
+ 	 son_a_jouer3.play_tone(0);}
     char c = uart->read();
 
         if(c== '\r')
@@ -712,25 +690,26 @@ int16_t nbytes= uart->available();
         {
             buffer[counter] = c;
         }
-
+	nbytes--;
     counter++;
 
     }
 
-// -1000 signifie une mauvaise communication entre les cartes, peut survenir de temps en temps
+
+uart->end();
+
+// -1000 signifie une mauvaise communication entre les cartes, peut survenir de temps en temps ou si le recepteur n'est pas present
 
 if((int)distance != -1000)
 {
 // Si la distance est plus grande que la limite
-
-
     // ZONE DE VOL INTERDITE
     if(distance > MAX_DISTANCE_UWB)
     {
 
     // Test de son pour savoir si la condition est atteinte :
     // AP_ToneAlarm son_a_jouer2;
-    // son_a_jouer2.play_tone(8);
+     //son_a_jouer2.play_tone(8);
 
     // On compte le nombre de fois que le capteur a mesuré un dépassement
     g_compteur_atteinte_limite++;
@@ -761,11 +740,11 @@ if((int)distance != -1000)
 
 }
 
-uart->end();
+
 
 }
 
-
+*/
 /*
   constructor for main Copter class
  */

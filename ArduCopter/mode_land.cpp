@@ -1,4 +1,5 @@
 #include "Copter.h"
+#include "AP_Notify/ToneAlarm.h"
 
 // FIXME? why are these static?
 static bool land_with_gps;
@@ -122,6 +123,8 @@ void ModeLand::nogps_run()
     // disarm when the landing detector says we've landed
     if (copter.ap.land_complete && motors->get_spool_state() == AP_Motors::SpoolState::GROUND_IDLE) {
         copter.arming.disarm(AP_Arming::Method::LANDED);
+	AP_ToneAlarm sonstop;
+	sonstop.stop_cont_tone();
     }
 
     // Land State Machine Determination

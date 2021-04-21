@@ -41,12 +41,13 @@ public:
 
     /// play_tune - play one of the pre-defined tunes
     void play_tone(const uint8_t tone_index);
-
+  
+    // stop_cont_tone - stop playing the currently playing continuous tone
+    void stop_cont_tone();
 
 private:
 
-    // stop_cont_tone - stop playing the currently playing continuous tone
-    void stop_cont_tone();
+  
 
     // check_cont_tone - check if we should begin playing a continuous tone
     void check_cont_tone();
